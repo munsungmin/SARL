@@ -1,0 +1,7 @@
+# SARL-specific dependencies (not covered by veRL's setup.py)
+# Install after setting up veRL (see README.md)
+hdbscan
+networkx
+scikit-learn
+requests
+math-verify

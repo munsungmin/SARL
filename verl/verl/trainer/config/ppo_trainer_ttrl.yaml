@@ -1,0 +1,14 @@
+defaults:
+  - ppo_trainer
+  - _self_
+
+ttrl:
+  # Whether to enable TTRL (https://arxiv.org/abs/2504.16084)
+  enable: false
+
+  # Number of rollouts used for actual RL training
+  n_samples_per_prompt: ${actor_rollout_ref.rollout.n}
+
+  # Number of rollouts generated per prompt for majority-vote pseudo-labeling (>= n_samples_per_prompt)
+  n_votes_per_prompt: ${actor_rollout_ref.rollout.n}
+
