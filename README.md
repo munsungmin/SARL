@@ -21,8 +21,8 @@ SR(G) = 0.5 × C(G)  +  1 / (1 + L(G))
 where `C(G)` is the average clustering coefficient (local coherence) and `L(G)` is the average shortest path length (global efficiency).
 
 **Results on Qwen3-4B:**
-- Math (AIME25, AMC23, MATH500, Minerva): **+7.65% avg under GRPO**, **+5.87% under PPO** — matches or surpasses ground-truth RL without any labels.
-- Open-ended (WildBench, OpenRubrics-v2): **+9.10% under GRPO**, **+10.35% under PPO** — substantially outperforms DPO and entropy-based baselines.
+- Math (AIME25, AMC23, MATH500, Minerva): **+11.6% avg under GRPO**, **+9.1% under PPO** , matches or surpasses ground-truth RL without any labels.
+- Open-ended (WildBench, OpenRubrics-v2): **+34.6% under GRPO**, **+30.4% under PPO** , substantially outperforms DPO and entropy-based baselines.
 - Training dynamics exhibit lower KL divergence while preserving high policy entropy.
 
 
