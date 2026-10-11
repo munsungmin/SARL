@@ -14,22 +14,26 @@
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$REPO_ROOT"
 
+# (add) ---- conda 환경에서 다른 저장소의 verl 이 아닌 이 저장소의 verl을 사용하기 위함 
+export PYTHONPATH="$REPO_ROOT/verl${PYTHONPATH:+:$PYTHONPATH}"
+
 # Load conda/CUDA modules as needed for your cluster, e.g.:
 # module load conda/2024.09 cuda/12.9.0
 # conda activate /path/to/conda/envs/verl
 
 export PYTHONNOUSERSITE=1
+export VLLM_USE_V1=1
 export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
 export TRITON_CACHE_DIR="${TRITON_CACHE_DIR:-$HOME/.cache/triton}"
 JOB_ID="${SLURM_JOB_ID:-local}"
-export RAY_TMPDIR="/tmp/ray_${JOB_ID}"
-export TMPDIR="/tmp/tmp_${JOB_ID}"
+export RAY_TMPDIR="/data/sungmin/RL/tmp/ray_${JOB_ID}"
+export TMPDIR="/data/sungmin/RL/tmp/tmp_${JOB_ID}"
 mkdir -p "$RAY_TMPDIR" "$TMPDIR"
 unset ROCR_VISIBLE_DEVICES HIP_VISIBLE_DEVICES
 
 # ---- (add) GPU configuration ----
 # bash scripts/grpo/aime/sarl.slurm 로 실행
-export CUDA_VISIBLE_DEVICES=0,1 #slurm 사용 안할 때 
+export CUDA_VISIBLE_DEVICES=0,1,2,3 #slurm 사용 안할 때 
 
 n_gpus_per_node=""
 nnodes=1
@@ -61,7 +65,9 @@ experiment_name="qwen3-4b_aime_grpo_structure_only"
 
 
 # (add) ---- root directory for logs, checkpoints, and wandb ----
-root_dir="/data/sungmin/RL/${project_name}/${experiment_name}/"
+git_commit=$(git rev-parse --short HEAD)
+root_dir="/data/sungmin/RL/${project_name}/${experiment_name}/${git_commit}" 
+
 # ---- Data ----
 
 data_root="/data/sungmin/RL/datasets"
@@ -94,6 +100,7 @@ export WANDB_API_KEY="wandb_v1_S3nvgNwZZ3BUv9hFIutO85PjcZL_mWBUSNClrRrknAA27AmC0
 export WANDB_ENTITY="RL_reasoning1"
 export WANDB_MODE="online"
 export WANDB_DIR="${root_dir}/wandb"
+export WANDB_GIT_ROOT="$REPO_ROOT" # github commit 
 mkdir -p "$WANDB_DIR"
 
 # (add) ---- log(console,local) configuration ---- 
