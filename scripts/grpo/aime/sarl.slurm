@@ -90,7 +90,7 @@ max_critic_ckpt_to_keep=2
 ## trainer.resume_mode = "auto" 
 ## trainer.resume_mode = "diable"  
 ## trainer.resume_mode = "resume_path" , trainer.resume_from_path = "${checkpoint_dir}/global_step_XXX.pt" 
-resume_mode="auto"
+resume_mode="disable"
 
 # (add) ---- default log configuration ---- 
 logger='["console","wandb"]'
@@ -125,14 +125,15 @@ exec 1> >(tee -a "${log_dir}/${log_id}.out") \
 ## actor_rollout_ref.actor.use_dynamic_bsz=True 기본적으로 얘가 토큰 수 제한을 기준으로 자동 분할
 use_dynamic_bsz=True
 ### 1024 + 8192 = 9216 < 16384 (ppo_max_token_len_per_gpu) => batch_size_per_gpu=32로 설정 가능
+
 ppo_micro_batch_size_per_gpu=32  # 여기에 gpu 개수 * rollout_n 개가 update 단위 , train_batch_size=256 이라면 , gpu 4개라면, 2번에 걸쳐서 update 수행 
-ppo_max_token_len_per_gpu=16384              # forward -> loss 계산 -> backward -> gradient 누적 
+ppo_max_token_len_per_gpu=32768              # forward -> loss 계산 -> backward -> gradient 누적 
 
 rollout_log_prob_micro_batch_size_per_gpu=32
-rollout_log_prob_max_token_len_per_gpu=16384 # rollout 생성 -> actor로 log_prob 계산  
+rollout_log_prob_max_token_len_per_gpu=32768 # rollout 생성 -> actor로 log_prob 계산  
 
 ref_log_prob_micro_batch_size_per_gpu=32
-ref_log_prob_max_token_len_per_gpu=16384     # rollout 생성 -> ref로 log_prob 계산 
+ref_log_prob_max_token_len_per_gpu=32768     # rollout 생성 -> ref로 log_prob 계산 
 
 ## error1 : update_actor, backward 중 OOM  
 param_offload=False 
@@ -142,7 +143,8 @@ optimizer_offload=False
 max_prompt_length=1024
 max_response_length=8192
 rollout_n=8
-rollout_gpu_memory_utilization=0.10
+rollout_gpu_memory_utilization=0.60
+tensor_model_parallel_size=4
 
 ## error3 : embedding server OOM => --gpu-memory-utilization 0.10 으로 변경 
 embedding_gpu_memory_utilization=0.10
@@ -151,6 +153,10 @@ embedding_gpu_memory_utilization=0.10
 ## kwargs 같은것 들은 , 알아서 compute_score 부분에 kwargs 로 들어감, 어쨌든 저런식으로 넘겨주면 될 듯 
 
 
+# (add) ----train 전에 validation 수행 여부 ----
+## MATH500 , AMC23, AIME25 데이터셋에 대해 validation 수행 여부 확인 , 근데 오래걸림 
+val_before_train=False
+test_freq=10 # update step 몇번에 한번씩 validation 할지 (minibatch 기준 step)
 
 # ---- SARL reward configuration ----
 embedding_model="Qwen/Qwen3-Embedding-0.6B"
@@ -173,7 +179,8 @@ python -m vllm.entrypoints.openai.api_server \
     --max-model-len 4096 \
     --disable-log-stats \
     --tensor-parallel-size 1 \
-    1> >(tee -a "${log_dir}/embedding_server_${JOB_ID}.log") 2>&1 &
+    1> "${log_dir}/embedding_server_${JOB_ID}.log" \
+    2> >(tee -a "${log_dir}/embedding_server_${JOB_ID}.err" 1>&2) &
 EMBEDDING_SERVER_PID=$!
 
 echo "Waiting for embedding server..."
@@ -219,7 +226,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.fsdp_config.param_offload=$param_offload \
     actor_rollout_ref.actor.fsdp_config.optimizer_offload=$optimizer_offload \
     actor_rollout_ref.actor.fsdp_config.forward_prefetch=True \
-    actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
+    actor_rollout_ref.rollout.tensor_model_parallel_size=$tensor_model_parallel_size \
     actor_rollout_ref.rollout.name=vllm \
     actor_rollout_ref.rollout.gpu_memory_utilization=$rollout_gpu_memory_utilization \
     actor_rollout_ref.rollout.n=$rollout_n \
@@ -234,12 +241,13 @@ python3 -m verl.trainer.main_ppo \
     trainer.n_gpus_per_node=$n_gpus_per_node \
     trainer.nnodes=$nnodes \
     trainer.save_freq=20 \
-    trainer.test_freq=5 \
+    trainer.test_freq=$test_freq \
     trainer.total_epochs=15 \
     trainer.default_local_dir="$checkpoint_dir" \
     trainer.resume_mode="$resume_mode" \
     trainer.max_actor_ckpt_to_keep=$max_actor_ckpt_to_keep \
     trainer.max_critic_ckpt_to_keep=$max_critic_ckpt_to_keep \
+    trainer.val_before_train=$val_before_train \
     reward_model.enable=False \
     custom_reward_function.path="verl/verl/utils/reward_score/sarl.py" \
     custom_reward_function.name=compute_score \
