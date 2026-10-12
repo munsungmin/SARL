@@ -127,13 +127,13 @@ use_dynamic_bsz=True
 ### 1024 + 8192 = 9216 < 16384 (ppo_max_token_len_per_gpu) => batch_size_per_gpu=32로 설정 가능
 
 ppo_micro_batch_size_per_gpu=32  # 여기에 gpu 개수 * rollout_n 개가 update 단위 , train_batch_size=256 이라면 , gpu 4개라면, 2번에 걸쳐서 update 수행 
-ppo_max_token_len_per_gpu=32768              # forward -> loss 계산 -> backward -> gradient 누적 
+ppo_max_token_len_per_gpu=16384             # forward -> loss 계산 -> backward -> gradient 누적 
 
 rollout_log_prob_micro_batch_size_per_gpu=32
-rollout_log_prob_max_token_len_per_gpu=32768 # rollout 생성 -> actor로 log_prob 계산  
+rollout_log_prob_max_token_len_per_gpu=16384  # rollout 생성 -> actor로 log_prob 계산  
 
 ref_log_prob_micro_batch_size_per_gpu=32
-ref_log_prob_max_token_len_per_gpu=32768     # rollout 생성 -> ref로 log_prob 계산 
+ref_log_prob_max_token_len_per_gpu=16384      # rollout 생성 -> ref로 log_prob 계산 
 
 ## error1 : update_actor, backward 중 OOM  
 param_offload=False 
@@ -240,7 +240,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.experiment_name=$experiment_name \
     trainer.n_gpus_per_node=$n_gpus_per_node \
     trainer.nnodes=$nnodes \
-    trainer.save_freq=20 \
+    trainer.save_freq=5 \
     trainer.test_freq=$test_freq \
     trainer.total_epochs=15 \
     trainer.default_local_dir="$checkpoint_dir" \
