@@ -178,7 +178,7 @@ python -m vllm.entrypoints.openai.api_server \
     --dtype bfloat16 \
     --max-model-len 4096 \
     --disable-log-stats \
-    --tensor-parallel-size 1 \
+    --tensor-parallel-size 4 \
     1> "${log_dir}/embedding_server_${JOB_ID}.log" \
     2> >(tee -a "${log_dir}/embedding_server_${JOB_ID}.err" 1>&2) &
 EMBEDDING_SERVER_PID=$!
