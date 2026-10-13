@@ -138,6 +138,8 @@ ref_log_prob_max_token_len_per_gpu=16384      # rollout 생성 -> ref로 log_pro
 ## error1 : update_actor, backward 중 OOM  
 param_offload=False 
 optimizer_offload=False
+use_fused_kernels=True 
+fused_kernel_options_impl_backend=torch
 
 ## error2 : rollout/generate 중 OOM 
 max_prompt_length=1024
@@ -209,7 +211,8 @@ python3 -m verl.trainer.main_ppo \
     data.truncation='error' \
     data.shuffle=False \
     actor_rollout_ref.model.path=$model_name \
-    actor_rollout_ref.actor.optim.lr=1e-6 \
+    actor_rollout_ref.model.use_fused_kernels=$use_fused_kernel \
+    actor_rollout_ref.model.fused_kernel_options.impl_backend=$fused_kernel_options_impl_backend \
     actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.strategy="fsdp2" \
     actor_rollout_ref.actor.use_dynamic_bsz=$use_dynamic_bsz \
