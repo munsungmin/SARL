@@ -147,9 +147,9 @@ rollout_gpu_memory_utilization=0.60
 tensor_model_parallel_size=4
 
 ## error3 : embedding server OOM => --gpu-memory-utilization 0.10 으로 변경 
-embedding_gpu_memory_utilization=0.10
+embedding_gpu_memory_utilization=0.05
 
-# (add) ---- reward module ----
+# (add)----reward module----
 ## kwargs 같은것 들은 , 알아서 compute_score 부분에 kwargs 로 들어감, 어쨌든 저런식으로 넘겨주면 될 듯 
 
 
@@ -158,11 +158,14 @@ embedding_gpu_memory_utilization=0.10
 val_before_train=False
 test_freq=10 # update step 몇번에 한번씩 validation 할지 (minibatch 기준 step)
 
+
+
 # ---- SARL reward configuration ----
 embedding_model="Qwen/Qwen3-Embedding-0.6B"
 embedding_server_port=8100
 cluster_method="hdbscan"
 is_think_model="true"
+
 
 # ---- Start standalone vLLM embedding server ----
 
@@ -230,6 +233,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.name=vllm \
     actor_rollout_ref.rollout.gpu_memory_utilization=$rollout_gpu_memory_utilization \
     actor_rollout_ref.rollout.n=$rollout_n \
+    actor_rollout_ref.rollout.max_num_seqs=128 \
     actor_rollout_ref.ref.fsdp_config.param_offload=True \
     critic.model.enable_gradient_checkpointing=True \
     critic.model.enable_activation_offload=True \
