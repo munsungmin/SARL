@@ -127,7 +127,7 @@ use_dynamic_bsz=True
 ### 1024 + 8192 = 9216 < 16384 (ppo_max_token_len_per_gpu) => batch_size_per_gpu=32로 설정 가능
 
 ppo_micro_batch_size_per_gpu=32  # 여기에 gpu 개수 * rollout_n 개가 update 단위 , train_batch_size=256 이라면 , gpu 4개라면, 2번에 걸쳐서 update 수행 
-ppo_max_token_len_per_gpu=16384             # forward -> loss 계산 -> backward -> gradient 누적 
+ppo_max_token_len_per_gpu=9216             # forward -> loss 계산 -> backward -> gradient 누적 
 
 rollout_log_prob_micro_batch_size_per_gpu=32
 rollout_log_prob_max_token_len_per_gpu=16384  # rollout 생성 -> actor로 log_prob 계산  
@@ -138,7 +138,9 @@ ref_log_prob_max_token_len_per_gpu=16384      # rollout 생성 -> ref로 log_pro
 ## error1 : update_actor, backward 중 OOM  
 param_offload=False 
 optimizer_offload=False
-use_fused_kernels=True 
+use_fused_kernel=True 
+
+### 마지막 출력 계산을 512 token 단위로 잘라서 누적(?) 하는 방식 , 확인 필요 
 fused_kernel_options_impl_backend=torch
 
 ## error2 : rollout/generate 중 OOM 
@@ -149,7 +151,7 @@ rollout_gpu_memory_utilization=0.60
 tensor_model_parallel_size=4
 
 ## error3 : embedding server OOM => --gpu-memory-utilization 0.10 으로 변경 
-embedding_gpu_memory_utilization=0.05
+embedding_gpu_memory_utilization=0.025
 
 # (add)----reward module----
 ## kwargs 같은것 들은 , 알아서 compute_score 부분에 kwargs 로 들어감, 어쨌든 저런식으로 넘겨주면 될 듯 
